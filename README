@@ -14,4 +14,4 @@ project/
 ├── writers/
 │   ├── __init__.py
 │   └── poscar_writer.py
-└── config.py                  # 全局配置文件，用于存放参数和常量
+└── config.py

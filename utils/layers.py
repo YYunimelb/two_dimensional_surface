@@ -2,7 +2,7 @@
 import numpy as np
 from utils.supercell import SupercellBuilder
 from utils.geometry import are_points_collinear
-from config import vdw_radii  # 假设 van der Waals 半径数据在 config.py 中
+from config import vdw_radii,covalent_radii  # 假设 van der Waals 半径数据在 config.py 中
 
 class LayerAnalyzer:
     def __init__(self, atomic_types, positions, all_positions, distances, cutoff_factor=1.2):
@@ -14,9 +14,10 @@ class LayerAnalyzer:
 
     def calculate_dynamic_cutoff(self, index1, index2):
         # 获取两个索引的原子类型
-        radius_sum = vdw_radii[self.atomic_types[index1]] + vdw_radii[self.atomic_types[index2]]
+        radius_sum = covalent_radii[self.atomic_types[index1]] + covalent_radii[self.atomic_types[index2]]
+        vdw_sum = vdw_radii[self.atomic_types[index1]] + vdw_radii[self.atomic_types[index2]]
         # 计算动态的阈值
-        return radius_sum * self.cutoff_factor
+        return (radius_sum+vdw_sum)/2 * self.cutoff_factor
 
     def layer_marking(self):
         num_original = len(self.positions)
@@ -51,7 +52,7 @@ class LayerAnalyzer:
 
 # utils/layer_checker.py
 import numpy as np
-from utils.geometry import are_points_collinear
+from utils.geometry import are_points_collinear,are_points_coplanar
 
 class LayerChecker:
     def __init__(self, structure_processor):
@@ -109,7 +110,7 @@ class LayerChecker:
             # 检查等效原子数量并判断是否共线
             if len(equivalent_atoms) >= 3:
                 # 如果等效原子共线，则符合层状结构
-                if  are_points_collinear([self.supercell_positions[i] for i in equivalent_atoms]):
+                if  are_points_collinear([self.supercell_positions[i] for i in equivalent_atoms]) or not are_points_coplanar([self.supercell_positions[i] for i in equivalent_atoms]):
                     all_layered = False
                     break
             else:

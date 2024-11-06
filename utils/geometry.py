@@ -35,24 +35,24 @@ import numpy as np
 
 
 def are_points_coplanar(positions):
-    """检查点是否共面"""
+    """check whether all points in the same plane"""
     if len(positions) < 4:
-        # 少于4个点一定共面
+        # at least 4, otherwise must in same plane
         return True
 
-    # 选择前三个点作为基准点，计算两个基准向量
+    # Select the first three points as reference points and calculate two reference vectors.
     base_point = np.array(positions[0])
     vector_1 = np.array(positions[1]) - base_point
     vector_2 = np.array(positions[2]) - base_point
 
-    # 计算法向量
+    # Calculate the normal vector.
     normal_vector = np.cross(vector_1, vector_2)
     normal_vector = normal_vector / np.linalg.norm(normal_vector)  # 单位化法向量
 
-    # 检查其余点是否在平面内
+    # Check if the remaining points lie within the plane.
     for point in positions[3:]:
         vector_to_point = np.array(point) - base_point
-        # 计算点到平面的垂直距离，即法向量投影
+        # calculate the distance
         distance = np.dot(vector_to_point, normal_vector)
         if abs(distance) > 1e-4:  # 距离接近于零表示点在平面上
             return False
@@ -61,7 +61,7 @@ def are_points_coplanar(positions):
 
 
 def calculate_basis_vectors(supercell_positions, central_index, equivalent_indices):
-    """计算两个最小的、非共线的基矢"""
+    """Calculate the two smallest, non-collinear basis vectors."""
     central_position = supercell_positions[central_index]
     vectors = [supercell_positions[idx] - central_position for idx in equivalent_indices if idx != central_index]
 
@@ -84,7 +84,7 @@ def calculate_basis_vectors(supercell_positions, central_index, equivalent_indic
     return basis_vector_1, basis_vector_2
 
 def find_third_basis_vector(v1, v2, original_basis):
-    """找到与给定两个基矢非共面的第三个基矢"""
+    """Find a third basis vector that is non-coplanar with the given two basis vectors."""
     a, b, c = original_basis[0, :], original_basis[1, :], original_basis[2, :]
     search_range = range(-5, 6)
     potential_v3s = [i * a + j * b + k * c for i in search_range for j in search_range for k in search_range]
@@ -97,21 +97,21 @@ def find_third_basis_vector(v1, v2, original_basis):
     else:
         return None
 def standardization_basis(original_basis):
-    # 原始基矢
+    # orginal basis vecter
     a_old, b_old, c_old = original_basis
 
-    # 新基矢 a
+    # new a
     a_length = np.linalg.norm(a_old)
     a_new = np.array([a_length, 0, 0])
 
-    # 新基矢 b
+    # new b
     b_length = np.linalg.norm(b_old)
     ab_dot = np.dot(a_old, b_old)
     b1 = ab_dot / a_length
     b2 = np.sqrt(b_length**2 - b1**2)
     b_new = np.array([b1, b2, 0])
 
-    # 新基矢 c
+    # new c
     ac_dot = np.dot(a_old, c_old)
     bc_dot = np.dot(b_old, c_old)
     c_length = np.linalg.norm(c_old)

@@ -64,8 +64,7 @@ def get_structure_from_mp(api_key):
 
 
 def single_structure_check(file_path):
-    #   file_path = "test/POSCAR_mp-341"  # 替换为实际POSCAR文件路径
-    # 解析 POSCAR 文件
+    #   file_path = "test/POSCAR_mp-341"  #
     processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
     processor.process_structure()
     #print(processor.layers)
@@ -82,12 +81,10 @@ def main():
     processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
     processor.process_structure()
 
-    # 使用 StructureNormalizer 进行结构标准化转换
     normalizer = StructureNormalizer(processor)
     normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
 
 
-    # 建立超胞
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@
 import numpy as np
 from utils.supercell import SupercellBuilder
 from utils.geometry import are_points_collinear
-from config import vdw_radii,covalent_radii  # 假设 van der Waals 半径数据在 config.py 中
+from config import vdw_radii,covalent_radii
 
 class LayerAnalyzer:
     def __init__(self, atomic_types, positions, all_positions, distances, cutoff_factor=1.2):
@@ -56,7 +56,7 @@ from utils.geometry import are_points_collinear,are_points_coplanar
 
 class LayerChecker:
     def __init__(self, structure_processor):
-        """初始化 LayerChecker，直接接收 StructureProcessor 实例"""
+        """initialization  LayerChecker，get StructureProcessor instance"""
         self.atomic_types = structure_processor.atomic_types
         self.lattice_vectors = structure_processor.lattice_vectors
         self.positions = structure_processor.positions
@@ -66,7 +66,6 @@ class LayerChecker:
         self.cutoff_factor = structure_processor.cutoff_factor
 
     def find_equivalent_atoms(self, central_atom_index, total_atoms, target_layer):
-        """查找等效原子"""
         num_types = len(self.atomic_types)
         potential_equivalents = [(central_atom_index + i * num_types) for i in range(total_atoms // num_types)]
         equivalent_atoms = [index for index in potential_equivalents if
@@ -74,7 +73,6 @@ class LayerChecker:
         return equivalent_atoms
 
     def check_layers(self):
-        """检查 layers 的唯一性，判断是否为 bulk"""
         unique_elements, counts = np.unique(self.layers, return_counts=True)
         if len(unique_elements) == 1:
             return "bulk"
@@ -87,7 +85,7 @@ class LayerChecker:
         return "layered"
 
     def analyze_structure(self):
-        """判断是否为层状结构的主要逻辑"""
+        """main logic for structure classification"""
         result = self.check_layers()
 
         if result == "bulk":
@@ -107,9 +105,8 @@ class LayerChecker:
             equivalent_atoms = self.find_equivalent_atoms(central_atom_index, len(self.supercell_positions),
                                                           layer_of_central_atom)
 
-            # 检查等效原子数量并判断是否共线
+            # exclusive one dimension and three dimension
             if len(equivalent_atoms) >= 3:
-                # 如果等效原子共线，则符合层状结构
                 if  are_points_collinear([self.supercell_positions[i] for i in equivalent_atoms]) or not are_points_coplanar([self.supercell_positions[i] for i in equivalent_atoms]):
                     all_layered = False
                     break

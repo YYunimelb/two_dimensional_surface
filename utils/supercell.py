@@ -20,7 +20,7 @@ class SupercellBuilder:
         for pos in self.positions:
             supercell_positions.append(pos + shift)
 
-        # 计算超胞的晶格向量
+        # calculate the supercell lattice vector
         supercell_lattice_vectors = np.zeros_like(self.lattice_vectors)
         supercell_lattice_vectors[0] = self.lattice_vectors[0] * (ix_end - ix_start + 1)
         supercell_lattice_vectors[1] = self.lattice_vectors[1] * (iy_end - iy_start + 1)

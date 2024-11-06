@@ -30,8 +30,4 @@ The 2D Layered Materials Analysis Project is designed to streamline the process 
 - `processors/`: Classes for handling various stages of structure processing, including supercell creation and layer checking.
 - `normalizers/`: Functions and classes to convert material structures to a standard format and to ensure consistent coordinate systems.
 
-## Installation
 
-1. Clone this repository:
-   ```bash
-   git clone <repository-url>

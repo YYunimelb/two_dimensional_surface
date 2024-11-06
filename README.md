@@ -22,12 +22,6 @@ The 2D Layered Materials Analysis Project is designed to streamline the process 
 
 5. **Data Matching**: The project also supports integration with the Materials Project database for comparison and matching of experimental structures with known materials.
 
-## Project Structure
 
-- `parsers/`: Structure file parsing tools, including VASP POSCAR parser.
-- `utils/`: Utility functions for operations such as supercell generation, distance calculations, and geometry transformations.
-- `models/`: Data models that represent atomic structures, lattice parameters, and associated attributes.
-- `processors/`: Classes for handling various stages of structure processing, including supercell creation and layer checking.
-- `normalizers/`: Functions and classes to convert material structures to a standard format and to ensure consistent coordinate systems.
 
 

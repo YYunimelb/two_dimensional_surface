@@ -17,6 +17,7 @@ class StructureProcessor:
         self.supercell_atomic_types = None
         self.supercell_lattice_vectors = None
         self.layers = None
+        self.supercell_boundry = supercell_boundry
 
         # parser structure
         self.parser = VaspParser(self.file_path)
@@ -95,31 +96,57 @@ class StructureNormalizer:
         final_basis = standardization_basis(new_basis)
 
         # 5. Transform to the normalized coordinate system and remove duplicates
-        positions, atomic_types = fill_to_new_basis(self.supercell_positions, self.supercell_atomic_types,
+        relative_positions, atomic_types = fill_to_new_basis(self.supercell_positions, self.supercell_atomic_types,
                                                            new_basis)
+        positions = np.dot(relative_positions,final_basis)
 
         # 6. Write to POSCAR file
         create_poscar(final_basis, atomic_types, positions,output_path)
 
 
 
-    def _write_poscar(self, unique_atoms, final_basis):
-        # Extract all unique types
-        unique_types = np.unique(unique_atoms['type'])
+import numpy as np
+from utils.geometry import fill_to_new_basis
+from parsers.write_poscar import create_poscar
 
-        # Construct POSCAR content
-        poscar_content = "Generated POSCAR\n1.0\n"
-        for vec in final_basis:
-            poscar_content += " ".join(f"{v:.10f}" for v in vec) + "\n"
-        poscar_content += " ".join(unique_types) + "\n"
+class BulkTo2DTransformer:
+    def __init__(self, processor):
+        """Initialize the 2D transformation class using processed structure data."""
+        self.lattice_vectors = processor.lattice_vectors
+        self.atomic_types = processor.atomic_types
+        self.positions = processor.positions
+        self.supercell_positions = processor.supercell_positions
+        self.supercell_atomic_types = processor.supercell_atomic_types
+        self.layers = processor.layers
 
-        # Calculate and sort the number of atoms of each type
-        counts = [np.sum(unique_atoms['type'] == typ) for typ in unique_types]
-        poscar_content += " ".join(map(str, counts)) + "\n"
+    def transform_to_2d(self, output_path="POSCAR_2D"):
+        """Transform bulk material to 2D by adjusting z-coordinates and creating a new basis."""
 
-        poscar_content += "Direct\n"
-        for typ in unique_types:
-            for atom in unique_atoms[unique_atoms['type'] == typ]:
-                poscar_content += f"{atom['x']:.10f} {atom['y']:.10f} {atom['z']:.10f}\n"
+        # Step 1: Find all atoms in supercell_positions where layer == 1
+        layer_1_indices = [i for i, layer in enumerate(self.layers) if layer == 1]
+        layer_1_positions = np.array([self.supercell_positions[i] for i in layer_1_indices])
+        layer_1_atomic_types = [self.supercell_atomic_types[i] for i in layer_1_indices]
 
-        return poscar_content
+        # Step 2: Calculate thickness (d) and mean z position (a)
+        z_min = np.min(layer_1_positions[:, 2])
+        z_max = np.max(layer_1_positions[:, 2])
+        thickness_d = z_max - z_min
+        mean_z = (z_max + z_min) / 2
+
+        # Step 3: Shift z-coordinates of all atoms in layer == 1
+        shift_z = (thickness_d + 20) / 2 - mean_z
+        layer_1_positions[:, 2] += shift_z
+
+        # Step 4: Define new basis vectors
+        new_basis = np.array([
+            self.lattice_vectors[0],
+            self.lattice_vectors[1],
+            [0, 0, thickness_d + 20]
+        ])
+
+        # Step 5: Convert the adjusted positions to the new basis
+        relative_positions, atomic_types = fill_to_new_basis(layer_1_positions, layer_1_atomic_types, new_basis)
+
+        # Step 6: Save the transformed structure as a POSCAR file
+        positions = np.dot(relative_positions, new_basis)
+        create_poscar(new_basis, atomic_types, positions, output_path)

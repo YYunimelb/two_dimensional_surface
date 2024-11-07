@@ -125,7 +125,7 @@ def standardization_basis(original_basis):
 
 import numpy as np
 
-def fill_to_new_basis(self, supercell_positions, supercell_atomic_types, new_basis):
+def fill_to_new_basis(supercell_positions, supercell_atomic_types, new_basis):
     """Transform atomic positions into a new basis and normalize coordinates."""
     # Calculate the inverse of the new basis
     inverse_basis = np.linalg.inv(new_basis)
@@ -147,7 +147,7 @@ def fill_to_new_basis(self, supercell_positions, supercell_atomic_types, new_bas
     unique_atoms = np.unique(combined)
 
     # Extract positions and atomic types from unique_atoms
-    positions = np.vstack((unique_atoms['x'], unique_atoms['y'], unique_atoms['z'])).T
+    relative_positions  = np.vstack((unique_atoms['x'], unique_atoms['y'], unique_atoms['z'])).T
     atomic_types = unique_atoms['type'].tolist()
 
-    return positions, atomic_types
+    return relative_positions, atomic_types

@@ -9,9 +9,24 @@ from utils import SupercellBuilder, LayerAnalyzer,LayerChecker,StructureProcesso
 import os
 from pymatgen.io.vasp import Poscar
 from mp_api.client import MPRester
-from utils.structure_processor import StructureProcessor
+from utils.structure_processor import StructureProcessor,BulkTo2DTransformer
+from utils.surface import SurfaceAtomIdentifier
 
 
+def print_surface_summary(surface_markers):
+    """
+    Print the positions (1-based index) of atoms on the top surface (1), bottom surface (-1), and isolated (3).
+
+    Parameters:
+    - surface_markers (list): List of surface markers where 1 = top surface, -1 = bottom surface, 3 = isolated atom.
+    """
+    top_surface_indices = [i + 1 for i, marker in enumerate(surface_markers) if marker == 1]
+    bottom_surface_indices = [i + 1 for i, marker in enumerate(surface_markers) if marker == -1]
+    isolated_indices = [i + 1 for i, marker in enumerate(surface_markers) if marker == 3]
+
+    print("Top surface atoms (1):", top_surface_indices)
+    print("Bottom surface atoms (-1):", bottom_surface_indices)
+    print("Isolated atoms (3):", isolated_indices)
 def get_structure_from_mp(api_key):
     """查询Materials Project数据库，获取结构数据并判断是否为层状结构,"""
 
@@ -83,6 +98,27 @@ def main():
     #
     # normalizer = StructureNormalizer(processor)
     # normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
+
+    #
+    # file_path = "POSCAR_bulk"
+    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
+    # processor.process_structure()
+    #
+    # transformer = BulkTo2DTransformer(processor)
+    # transformer.transform_to_2d(output_path="POSCAR_2D")
+
+    file_path = "POSCAR_2D"
+    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
+    processor.process_structure()
+    surface_identifier = SurfaceAtomIdentifier(processor)
+    surface_markers = surface_identifier.find_surface_atoms()
+    print_surface_summary(surface_markers)
+
+
+
+
+
+
 
 
 

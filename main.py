@@ -77,12 +77,14 @@ def main():
     #get_structure_from_mp(API_KEY)
     #single_structure_check(f"test/POSCAR_mp-4906")
 
-    file_path = "test/POSCAR_mp-4906"
-    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
-    processor.process_structure()
+    # file_path = "test/POSCAR_mp-4906"
+    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
+    # processor.process_structure()
+    #
+    # normalizer = StructureNormalizer(processor)
+    # normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
 
-    normalizer = StructureNormalizer(processor)
-    normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
+
 
 
 

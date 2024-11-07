@@ -121,3 +121,33 @@ def standardization_basis(original_basis):
     c_new = np.array([c1, c2, c3])
 
     return np.array([a_new, b_new, c_new])
+
+
+import numpy as np
+
+def fill_to_new_basis(self, supercell_positions, supercell_atomic_types, new_basis):
+    """Transform atomic positions into a new basis and normalize coordinates."""
+    # Calculate the inverse of the new basis
+    inverse_basis = np.linalg.inv(new_basis)
+
+    # Convert absolute coordinates to relative coordinates in the new basis
+    relative_positions = np.dot(supercell_positions, inverse_basis)
+    normalized_positions = np.mod(relative_positions, 1)
+
+    # Normalize coordinates within the 0-1 range to prevent floating-point issues
+    epsilon = 1e-3
+    normalized_positions[normalized_positions > 1 - epsilon] = 0
+    rounded_positions = np.round(normalized_positions, decimals=5)
+
+    # Combine coordinates and atomic types into a structured array and remove duplicates
+    combined = np.core.records.fromarrays(
+        [rounded_positions[:, 0], rounded_positions[:, 1], rounded_positions[:, 2], supercell_atomic_types],
+        names='x, y, z, type'
+    )
+    unique_atoms = np.unique(combined)
+
+    # Extract positions and atomic types from unique_atoms
+    positions = np.vstack((unique_atoms['x'], unique_atoms['y'], unique_atoms['z'])).T
+    atomic_types = unique_atoms['type'].tolist()
+
+    return positions, atomic_types

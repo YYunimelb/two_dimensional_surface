@@ -56,8 +56,11 @@ from utils.geometry import (
     find_equivalent_atoms,
     calculate_basis_vectors,
     find_third_basis_vector,
-    standardization_basis
+    standardization_basis,
+    fill_to_new_basis
 )
+from parsers.write_poscar import create_poscar
+
 
 class StructureNormalizer:
     def __init__(self, processor):
@@ -92,32 +95,13 @@ class StructureNormalizer:
         final_basis = standardization_basis(new_basis)
 
         # 5. Transform to the normalized coordinate system and remove duplicates
-        unique_atoms = self._convert_to_relative_normalize(self.supercell_positions, self.supercell_atomic_types,
+        positions, atomic_types = fill_to_new_basis(self.supercell_positions, self.supercell_atomic_types,
                                                            new_basis)
 
         # 6. Write to POSCAR file
-        poscar_content = self._write_poscar(unique_atoms, final_basis)
-        with open(output_path, "w") as f:
-            f.write(poscar_content)
+        create_poscar(final_basis, atomic_types, positions,output_path)
 
-    def _convert_to_relative_normalize(self, supercell_positions, supercell_atomic_types, original_basis):
-        """Convert coordinates to relative coordinates and normalize"""
-        inverse_basis = np.linalg.inv(original_basis)
-        relative_positions = np.dot(supercell_positions, inverse_basis)
-        normalized_positions = np.mod(relative_positions, 1)
 
-        # Normalize coordinates to the 0-1 range to avoid floating-point errors
-        epsilon = 1e-3
-        normalized_positions[normalized_positions > 1 - epsilon] = 0
-        rounded_positions = np.round(normalized_positions, decimals=5)
-
-        # Combine coordinates and atomic types, removing duplicates
-        combined = np.core.records.fromarrays(
-            [rounded_positions[:, 0], rounded_positions[:, 1], rounded_positions[:, 2], supercell_atomic_types],
-            names='x, y, z, type'
-        )
-        unique_atoms = np.unique(combined)
-        return unique_atoms
 
     def _write_poscar(self, unique_atoms, final_basis):
         # Extract all unique types

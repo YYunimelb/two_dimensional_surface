@@ -1,6 +1,7 @@
 # utils/structure_processor.py
 from parsers import VaspParser
 from utils import SupercellBuilder, LayerAnalyzer
+from utils.geometry import calculate_distances
 
 
 
@@ -31,7 +32,7 @@ class StructureProcessor:
         self.supercell_positions, self.supercell_atomic_types, self.supercell_lattice_vectors = supercell_builder.create_supercell()
 
         # calculate the distance for all atoms
-        distances = supercell_builder.calculate_distances(self.supercell_positions)
+        distances = calculate_distances(self.supercell_positions)
 
         # use LayerAnalyzer for layering
         layer_analyzer = LayerAnalyzer(self.supercell_atomic_types, self.positions, self.supercell_positions, distances, self.cutoff_factor)

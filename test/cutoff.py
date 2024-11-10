@@ -10,6 +10,6 @@ def calculate_dynamic_cutoff( type1, type2):
     return (radius_sum + vdw_sum) / 2 * 1
 
 
-type1 = "S"
-type2 = "Au"
+type1 = "Cs"
+type2 = "Cs"
 print(calculate_dynamic_cutoff(type1,type2))

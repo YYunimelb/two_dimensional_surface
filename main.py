@@ -11,7 +11,7 @@ from pymatgen.io.vasp import Poscar
 from mp_api.client import MPRester
 from utils.structure_processor import StructureProcessor,BulkTo2DTransformer
 from utils.surface import SurfaceAtomIdentifier
-
+from utils.out_format_control import print_surface_summary,format_surface_atoms_output
 
 def print_surface_summary(surface_markers):
     """
@@ -27,6 +27,9 @@ def print_surface_summary(surface_markers):
     print("Top surface atoms (1):", top_surface_indices)
     print("Bottom surface atoms (-1):", bottom_surface_indices)
     print("Isolated atoms (3):", isolated_indices)
+
+
+
 def get_structure_from_mp(api_key):
     """查询Materials Project数据库，获取结构数据并判断是否为层状结构,"""
 
@@ -89,16 +92,16 @@ def single_structure_check(file_path):
 
 def main():
     API_KEY = "mY30L5L7yZr48BNMeqkS9U9Zum6MHNpK"
-    #get_structure_from_mp(API_KEY)
-    #single_structure_check(f"test/POSCAR_mp-4906")
+    get_structure_from_mp(API_KEY)
+    #single_structure_check(f"test/POSCAR_mp-3")
 
-    # file_path = "test/POSCAR_mp-4906"
+    # file_path = "test/GeS.poscar"
     # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
     # processor.process_structure()
     #
     # normalizer = StructureNormalizer(processor)
     # normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
-
+    #
     #
     # file_path = "POSCAR_bulk"
     # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
@@ -106,14 +109,18 @@ def main():
     #
     # transformer = BulkTo2DTransformer(processor)
     # transformer.transform_to_2d(output_path="POSCAR_2D")
-
-    file_path = "POSCAR_2D"
-    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
-    processor.process_structure()
-    surface_identifier = SurfaceAtomIdentifier(processor)
-    surface_markers = surface_identifier.find_surface_atoms()
-    print_surface_summary(surface_markers)
-
+    #
+    # file_path = "POSCAR_2D"
+    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
+    # processor.process_structure()
+    # surface_identifier = SurfaceAtomIdentifier(processor)
+    # surface_markers = surface_identifier.find_surface_atoms()
+    # surface_result = surface_identifier.analyze_bonded_surface_atoms()
+    #
+    # print_surface_summary(surface_markers)
+    # print(format_surface_atoms_output(surface_result))
+    #
+    #
 
 
 

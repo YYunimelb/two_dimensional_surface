@@ -1,6 +1,6 @@
 # utils/geometry.py
 import numpy as np
-
+from config import vdw_radii,covalent_radii
 def find_central_atom(positions, lattice_vectors):
     """找到结构的中心原子"""
     center = 0.5 * (lattice_vectors[0] + lattice_vectors[1] + lattice_vectors[2])
@@ -151,3 +151,18 @@ def fill_to_new_basis(supercell_positions, supercell_atomic_types, new_basis):
     atomic_types = unique_atoms['type'].tolist()
 
     return relative_positions, atomic_types
+
+
+def calculate_dynamic_cutoff(atomic_types1, atomic_types2,cutoff_factor):
+    # 获取两个索引的原子类型
+
+    radius_sum = covalent_radii[atomic_types1] + covalent_radii[atomic_types2]
+    vdw_sum = vdw_radii[atomic_types1] + vdw_radii[atomic_types2]
+    # 计算动态的阈值
+    return (radius_sum+vdw_sum)/2 * cutoff_factor
+
+def calculate_distances(positions):
+    positions = np.array(positions)
+    diff = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
+    distances = np.sqrt(np.sum(diff ** 2, axis=2))
+    return distances

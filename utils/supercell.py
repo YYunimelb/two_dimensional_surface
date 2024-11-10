@@ -38,9 +38,3 @@ class SupercellBuilder:
                         supercell_atomic_types += self.atomic_types
 
         return np.array(supercell_positions), supercell_atomic_types, supercell_lattice_vectors
-
-    @staticmethod
-    def calculate_distances(positions):
-        diff = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
-        distances = np.sqrt(np.sum(diff ** 2, axis=2))
-        return distances

@@ -63,22 +63,27 @@ def get_structure_from_mp(api_key):
             mp_id = doc.material_id
             print(mp_id)
 
-            # 将结构写入 POSCAR 文件
-            poscar = Poscar(mp_structure)
-            poscar_file_path = f"data/structure/POSCAR_{mp_id}"
-            poscar.write_file(poscar_file_path)
+            try:
+                # 将结构写入 POSCAR 文件
+                poscar = Poscar(mp_structure)
+                poscar_file_path = f"data/structure/POSCAR_{mp_id}"
+                poscar.write_file(poscar_file_path)
 
-            # 使用 StructureProcessor 和 LayerChecker 检查结构是否为层状
-            processor = StructureProcessor(poscar_file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
-            processor.process_structure()
-            layer_checker = LayerChecker(processor)
-            result = layer_checker.analyze_structure()
+                # 使用 StructureProcessor 和 LayerChecker 检查结构是否为层状
+                processor = StructureProcessor(poscar_file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2),
+                                               cutoff_factor=1.0)
+                processor.process_structure()
+                layer_checker = LayerChecker(processor)
+                result = layer_checker.analyze_structure()
 
-            # 根据结果处理文件
-            if result == "layered":
-                print(f"{mp_id} : layered")
-            else:
-                os.remove(poscar_file_path)  # 如果不是层状结构，删除该 POSCAR 文件
+                # 根据结果处理文件
+                if result == "layered":
+                    print(f"{mp_id} : layered")
+                else:
+                    os.remove(poscar_file_path)  # 如果不是层状结构，删除该 POSCAR 文件
+
+            except Exception as e:
+                print(f"Error processing {mp_id}: {e}")
 
 
 def single_structure_check(file_path):

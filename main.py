@@ -97,7 +97,7 @@ def verify_surface_atom_rule(surface_result):
     - bool: True if the rule is satisfied for all surface atoms, otherwise False.
     """
     # Define valence electrons for relevant elements
-    valence_electrons = {
+    valence_electrons = {"H":1,
         "B": 3, "C": 4, "N": 5, "O": 6, "F": 7,  # Group 13 to 17
         "Al": 3, "Si": 4, "P": 5, "S": 6, "Cl": 7,
         "Ga": 3, "Ge": 4, "As": 5, "Se": 6, "Br": 7,
@@ -115,8 +115,11 @@ def verify_surface_atom_rule(surface_result):
         Returns:
         - bool: True if all atoms satisfy the rule, False otherwise.
         """
+
         for atom in surface_atoms:
             element = atom["element"]
+            if element == "H" or element == "O"  or element == "S":
+                continue
             bond_count = min(atom["bond_count"], 3)  # Limit bonded atoms to a maximum of 3
             if element not in valence_electrons:
                 return False  # Element not allowed on the surface
@@ -143,54 +146,56 @@ def single_structure_check(file_path):
     result = layer_checker.analyze_structure()
     print("The structure is:", result)
 
-def main(i):
+def main(file_path,file_name):
     #API_KEY = "mY30L5L7yZr48BNMeqkS9U9Zum6MHNpK"
     #get_structure_from_mp(API_KEY)
     #single_structure_check(f"test/POSCAR_mp-3")
 
-    file_path = f"data/structure/POSCAR_mp-{i}"
+    #file_path = f"data/structure_not_satisfy/POSCAR_mp-{i}"
+
     processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
     processor.process_structure()
+    # surface_identifier = SurfaceAtomIdentifier(processor)
+    # if  not surface_identifier.check_layer_connectivity():
+    #     shutil.copyfile(path,f"data/check_layer_connectivity/{file_name}")
+
+    normalizer = StructureNormalizer(processor)
+    normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
+
+
+    file_path = "POSCAR_bulk"
+    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
+    processor.process_structure()
+
+
+
+
+    transformer = BulkTo2DTransformer(processor)
+    transformer.transform_to_2d(output_path="POSCAR_2D")
+
+    file_path = "POSCAR_2D"
+    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
+    processor.process_structure()
     surface_identifier = SurfaceAtomIdentifier(processor)
-    if not surface_identifier.check_layer_connectivity():
-        print(i)
-        shutil.copyfile(f"data/structure/POSCAR_mp-{i}",f"data/structure_not_satisfy/POSCAR_mp-{i}")
-
-    # normalizer = StructureNormalizer(processor)
-    # normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
-    #
-    #
-    # file_path = "POSCAR_bulk"
-    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
-    # processor.process_structure()
-    # surface_identifier = SurfaceAtomIdentifier(processor)
-
-
-
-    # transformer = BulkTo2DTransformer(processor)
-    # transformer.transform_to_2d(output_path="POSCAR_2D")
-    #
-    # file_path = "POSCAR_2D"
-    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
-    # processor.process_structure()
-    # surface_identifier = SurfaceAtomIdentifier(processor)
-    # surface_markers = surface_identifier.find_surface_atoms()
-    # print(surface_markers)
-    # print(surface_identifier.check_layer_connectivity())
-    # surface_result = surface_identifier.analyze_bonded_surface_atoms()
+    surface_markers = surface_identifier.find_surface_atoms()
+    surface_result = surface_identifier.analyze_bonded_surface_atoms()
 
     #print_surface_summary(surface_markers)
     #print(format_surface_atoms_output(surface_result))
-    # if not verify_surface_atom_rule(surface_result):
-    #     shutil.copyfile(f"data/structure/POSCAR_mp-{i}",f"data/structure_not_satisfy/POSCAR_mp-{i}")
+    if not verify_surface_atom_rule(surface_result):
+        print("False")
+        shutil.copyfile(path,f"data/structure_not_satisfy/{file_name}")
     #
     #
 
 if __name__ == "__main__":
     """ 2578 ,  3439,  3468  ,   3849,   4160, 4906, 5824 ,6023, 7049 , 7277 ,  7784  ,8093,  8094 , 8190, 8378 ,
               8586 ,   8800,  8806, 8946, 9396, 9622, 9815  """
-    for i in range(20000):  #range(10000):
-        if Path(f"data/structure/POSCAR_mp-{i}").exists():
-            #shutil.copyfile(f"data/structure/POSCAR_mp-{i}", f"test/POSCAR_mp-{i}")
-            main(i)
+    source_dir  =  "data/structure1"
+    i = 0
+    for filename in os.listdir(source_dir):
+        i = i+1
+        print(i)
+        path = os.path.join(source_dir, filename)
+        main(path,filename)
 

@@ -131,7 +131,7 @@ class SurfaceAtomIdentifier:
 
         For each atom, identify bonding atoms within the same layer.
         Then check if atoms in other layers are bonded using an adjusted cutoff
-        based on bonding distances with the same element type.
+        based on the most tightly bonded element type.
 
         Returns:
         - bool: True if no inter-layer connections are found, otherwise False.
@@ -139,9 +139,8 @@ class SurfaceAtomIdentifier:
         self.distances = calculate_distances(positions=self.supercell_positions)
 
         for i in range(len(self.positions)):
-
             bonding_atoms = []
-            bonding_distances = {}  # Store bonding distances grouped by element type
+            bonding_ratios = {}  # Store bonding tightness ratios grouped by element type
 
             # Identify bonding atoms in the same layer
             for j in range(len(self.supercell_positions)):
@@ -159,14 +158,30 @@ class SurfaceAtomIdentifier:
                     bonding_atoms.append(j)
 
                     element_type = self.supercell_atomic_types[j]
-                    if element_type not in bonding_distances:
-                        bonding_distances[element_type] = []
-                    bonding_distances[element_type].append(distance)
+                    radius_sum = covalent_radii[self.supercell_atomic_types[i]] + covalent_radii[element_type]
+                    ratio = distance  # Bond tightness ratio
 
-            # Calculate adjusted cutoff for each bonded element type
-            adjusted_cutoffs = {
-                element: 1.15 * max(distances) for element, distances in bonding_distances.items()
-            }
+                    if element_type not in bonding_ratios or ratio < bonding_ratios[element_type]:
+                        bonding_ratios[element_type] = ratio
+
+            # Find the most tightly bonded element type
+            if not bonding_ratios:
+                continue  # Skip atoms with no bonds in the same layer
+
+            most_tightly_bonded_element = min(bonding_ratios, key=bonding_ratios.get)
+
+            # Filter bonding atoms to only include the most tightly bonded element type
+            tightly_bonded_distances = [
+                self.distances[i, j]
+                for j in bonding_atoms
+                if self.supercell_atomic_types[j] == most_tightly_bonded_element
+            ]
+
+            if not tightly_bonded_distances:
+                continue  # No bonds with the tightly bonded element type
+
+            # Calculate adjusted cutoff
+            adjusted_cutoff = 1.15 * max(tightly_bonded_distances)
 
             # Check for bonding to atoms in other layers
             for j in range(len(self.supercell_positions)):
@@ -174,13 +189,13 @@ class SurfaceAtomIdentifier:
                     continue
 
                 element_type = self.supercell_atomic_types[j]
-                if element_type in adjusted_cutoffs:
+                if element_type == most_tightly_bonded_element:
                     distance = self.distances[i, j]
-                    if distance < adjusted_cutoffs[element_type]:
+                    if distance < adjusted_cutoff:
                         # Found an inter-layer bond
                         return False
-
         # No inter-layer connections found
+
         return True
 
     def analyze_bonded_surface_atoms(self):

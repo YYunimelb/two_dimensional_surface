@@ -1,6 +1,7 @@
 
 ##  data from Batsanov S S. Van der Waals radii of elements[J]. Inorganic materials, 2001, 37(9): 871-885.
 vdw_radii = {
+'H': 1.10,
     "Li": 2.2, "Be": 1.9, "B": 1.8, "C": 1.7, "N": 1.6, "O": 1.55, "F": 1.5,
     "Na": 2.4, "Mg": 2.2, "Al": 2.1, "Si": 2.1, "P": 1.95, "S": 1.8, "Cl": 1.8,
     "K": 2.8, "Ca": 2.4, "Sc": 2.3, "Ti": 2.15, "V": 2.05, "Cr": 2.05, "Mn": 2.05,

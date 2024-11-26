@@ -88,6 +88,101 @@ class SurfaceAtomIdentifier:
         self.surface_markers = surface_markers
         return surface_markers
 
+    @staticmethod
+    def point_to_plane_z(x, y, plane_params):
+        """
+        Calculate the z-coordinate of a point (x, y) on a plane.
+
+        Parameters:
+        - x, y: Coordinates of the point.
+        - plane_params: Tuple (a, b, c, d) defining the plane equation ax + by + cz + d = 0.
+
+        Returns:
+        - float: Calculated z-coordinate on the plane.
+        """
+        a, b, c, d = plane_params
+        return -(a * x + b * y + d) / c
+
+    @staticmethod
+    def calculate_plane(points):
+        """
+        Calculate the plane equation parameters from three points.
+
+        Parameters:
+        - points: List of three points, each a numpy array [x, y, z].
+
+        Returns:
+        - tuple: (a, b, c, d) coefficients of the plane equation ax + by + cz + d = 0.
+        """
+        p1, p2, p3 = points
+        # Compute two vectors on the plane
+        v1 = p2 - p1
+        v2 = p3 - p1
+        # Compute the normal vector
+        normal = np.cross(v1, v2)
+        a, b, c = normal
+        # Compute d using one of the points
+        d = -np.dot(normal, p1)
+        return a, b, c, d
+
+    def check_layer_connectivity(self):
+        """
+        Determine if the layers in the structure are connected.
+
+        For each atom, identify bonding atoms within the same layer.
+        Then check if atoms in other layers are bonded using an adjusted cutoff
+        based on bonding distances with the same element type.
+
+        Returns:
+        - bool: True if no inter-layer connections are found, otherwise False.
+        """
+        self.distances = calculate_distances(positions=self.supercell_positions)
+
+        for i in range(len(self.positions)):
+
+            bonding_atoms = []
+            bonding_distances = {}  # Store bonding distances grouped by element type
+
+            # Identify bonding atoms in the same layer
+            for j in range(len(self.supercell_positions)):
+                if i == j or self.layers[i] != self.layers[j]:  # Skip different layers
+                    continue
+
+                distance = self.distances[i, j]
+                cutoff = calculate_dynamic_cutoff(
+                    self.supercell_atomic_types[i],
+                    self.supercell_atomic_types[j],
+                    self.cutoff_factor
+                )
+
+                if distance < cutoff:
+                    bonding_atoms.append(j)
+
+                    element_type = self.supercell_atomic_types[j]
+                    if element_type not in bonding_distances:
+                        bonding_distances[element_type] = []
+                    bonding_distances[element_type].append(distance)
+
+            # Calculate adjusted cutoff for each bonded element type
+            adjusted_cutoffs = {
+                element: 1.15 * max(distances) for element, distances in bonding_distances.items()
+            }
+
+            # Check for bonding to atoms in other layers
+            for j in range(len(self.supercell_positions)):
+                if i == j or self.layers[i] == self.layers[j]:  # Skip atoms in the same layer
+                    continue
+
+                element_type = self.supercell_atomic_types[j]
+                if element_type in adjusted_cutoffs:
+                    distance = self.distances[i, j]
+                    if distance < adjusted_cutoffs[element_type]:
+                        # Found an inter-layer bond
+                        return False
+
+        # No inter-layer connections found
+        return True
+
     def analyze_bonded_surface_atoms(self):
         """
         Confirm true surface atoms among candidates marked by surface_markers.
@@ -151,12 +246,22 @@ class SurfaceAtomIdentifier:
 
                 elif len(bonding_atoms) >= 3:
                     for combination in itertools.combinations(bonding_atoms, 3):
+                        # Get the three points defining the plane
                         points = [self.supercell_positions[idx] for idx in combination]
-                        normal_vector = np.cross(points[1] - points[0], points[2] - points[0])
-                        if normal_vector[2] > 0 and marker == 1 and all(p[2] > self.positions[i][2] for p in points):
-                            break
-                        elif normal_vector[2] < 0 and marker == -1 and all(p[2] < self.positions[i][2] for p in points):
-                            break
+                        # Calculate the plane equation parameters
+                        plane_params = self.calculate_plane(points)
+                        if abs(plane_params[2]) < 0.1:
+                            continue
+                        current_x,current_y,current_z = self.supercell_positions[i]
+
+                        # Compute the z value on the plane for the current atom's x, y
+                        plane_z = self.point_to_plane_z(current_x, current_y, plane_params)
+
+                        # Compare the plane z with the current atom's z
+                        if marker == 1 and plane_z > current_z+ 0.01 :
+                            break  # Plane is above the current atom
+                        elif marker == -1 and plane_z < current_z-0.01 :
+                            break  # Plane is below the current atom
 
                     else:
                         if marker == 1:

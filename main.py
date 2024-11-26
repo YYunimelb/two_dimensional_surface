@@ -1,7 +1,9 @@
 # main.py
+import shutil
+
 from parsers import VaspParser
 from utils import SupercellBuilder, LayerAnalyzer
-
+from pathlib import Path
 import numpy as np
 from parsers import VaspParser
 from utils import SupercellBuilder, LayerAnalyzer,LayerChecker,StructureProcessor,StructureNormalizer
@@ -84,7 +86,53 @@ def get_structure_from_mp(api_key):
 
             except Exception as e:
                 print(f"Error processing {mp_id}: {e}")
+def verify_surface_atom_rule(surface_result):
+    """
+    Verify the rule for surface atoms based on valence electrons and bonded atoms.
 
+    Parameters:
+    - surface_result (dict): Dictionary with 'top_surface' and 'bottom_surface' containing atom details.
+
+    Returns:
+    - bool: True if the rule is satisfied for all surface atoms, otherwise False.
+    """
+    # Define valence electrons for relevant elements
+    valence_electrons = {
+        "B": 3, "C": 4, "N": 5, "O": 6, "F": 7,  # Group 13 to 17
+        "Al": 3, "Si": 4, "P": 5, "S": 6, "Cl": 7,
+        "Ga": 3, "Ge": 4, "As": 5, "Se": 6, "Br": 7,
+        "In": 3, "Sn": 4, "Sb": 5, "Te": 6, "I": 7,
+        "Tl": 3, "Pb": 4, "Bi": 5
+    }
+
+    def check_atoms(surface_atoms):
+        """
+        Check whether all atoms in the given surface satisfy the rules.
+
+        Parameters:
+        - surface_atoms (list): List of atom dictionaries.
+
+        Returns:
+        - bool: True if all atoms satisfy the rule, False otherwise.
+        """
+        for atom in surface_atoms:
+            element = atom["element"]
+            bond_count = min(atom["bond_count"], 3)  # Limit bonded atoms to a maximum of 3
+            if element not in valence_electrons:
+                return False  # Element not allowed on the surface
+            if valence_electrons[element] + bond_count < 8:
+                return False  # Rule not satisfied for this atom
+        return True
+
+    # Check top surface atoms
+    if not check_atoms(surface_result["top_surface"]):
+        return False
+
+    # Check bottom surface atoms
+    if not check_atoms(surface_result["bottom_surface"]):
+        return False
+
+    return True
 
 def single_structure_check(file_path):
     #   file_path = "test/POSCAR_mp-341"  #
@@ -95,15 +143,19 @@ def single_structure_check(file_path):
     result = layer_checker.analyze_structure()
     print("The structure is:", result)
 
-def main():
-    API_KEY = "mY30L5L7yZr48BNMeqkS9U9Zum6MHNpK"
-    get_structure_from_mp(API_KEY)
+def main(i):
+    #API_KEY = "mY30L5L7yZr48BNMeqkS9U9Zum6MHNpK"
+    #get_structure_from_mp(API_KEY)
     #single_structure_check(f"test/POSCAR_mp-3")
 
-    # file_path = "test/GeS.poscar"
-    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
-    # processor.process_structure()
-    #
+    file_path = f"data/structure/POSCAR_mp-{i}"
+    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
+    processor.process_structure()
+    surface_identifier = SurfaceAtomIdentifier(processor)
+    if not surface_identifier.check_layer_connectivity():
+        print(i)
+        shutil.copyfile(f"data/structure/POSCAR_mp-{i}",f"data/structure_not_satisfy/POSCAR_mp-{i}")
+
     # normalizer = StructureNormalizer(processor)
     # normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
     #
@@ -111,7 +163,10 @@ def main():
     # file_path = "POSCAR_bulk"
     # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
     # processor.process_structure()
-    #
+    # surface_identifier = SurfaceAtomIdentifier(processor)
+
+
+
     # transformer = BulkTo2DTransformer(processor)
     # transformer.transform_to_2d(output_path="POSCAR_2D")
     #
@@ -120,21 +175,22 @@ def main():
     # processor.process_structure()
     # surface_identifier = SurfaceAtomIdentifier(processor)
     # surface_markers = surface_identifier.find_surface_atoms()
+    # print(surface_markers)
+    # print(surface_identifier.check_layer_connectivity())
     # surface_result = surface_identifier.analyze_bonded_surface_atoms()
+
+    #print_surface_summary(surface_markers)
+    #print(format_surface_atoms_output(surface_result))
+    # if not verify_surface_atom_rule(surface_result):
+    #     shutil.copyfile(f"data/structure/POSCAR_mp-{i}",f"data/structure_not_satisfy/POSCAR_mp-{i}")
     #
-    # print_surface_summary(surface_markers)
-    # print(format_surface_atoms_output(surface_result))
     #
-    #
-
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
-    main()
+    """ 2578 ,  3439,  3468  ,   3849,   4160, 4906, 5824 ,6023, 7049 , 7277 ,  7784  ,8093,  8094 , 8190, 8378 ,
+              8586 ,   8800,  8806, 8946, 9396, 9622, 9815  """
+    for i in range(20000):  #range(10000):
+        if Path(f"data/structure/POSCAR_mp-{i}").exists():
+            #shutil.copyfile(f"data/structure/POSCAR_mp-{i}", f"test/POSCAR_mp-{i}")
+            main(i)
+

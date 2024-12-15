@@ -11,5 +11,5 @@ def calculate_dynamic_cutoff( type1, type2):
 
 
 type1 = "Tl"
-type2 = "S"
+type2 = "O"
 print(calculate_dynamic_cutoff(type1,type2))

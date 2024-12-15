@@ -146,56 +146,48 @@ def single_structure_check(file_path):
     result = layer_checker.analyze_structure()
     print("The structure is:", result)
 
-def main(file_path,file_name):
+def main(file_path):
     #API_KEY = "mY30L5L7yZr48BNMeqkS9U9Zum6MHNpK"
     #get_structure_from_mp(API_KEY)
-    #single_structure_check(f"test/POSCAR_mp-3")
+    single_structure_check(file_path)
 
     #file_path = f"data/structure_not_satisfy/POSCAR_mp-{i}"
 
     processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
     processor.process_structure()
-    # surface_identifier = SurfaceAtomIdentifier(processor)
-    # if  not surface_identifier.check_layer_connectivity():
-    #     shutil.copyfile(path,f"data/check_layer_connectivity/{file_name}")
-
-    normalizer = StructureNormalizer(processor)
-    normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
-
-
-    file_path = "POSCAR_bulk"
-    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
-    processor.process_structure()
-
-
-
-
-    transformer = BulkTo2DTransformer(processor)
-    transformer.transform_to_2d(output_path="POSCAR_2D")
-
-    file_path = "POSCAR_2D"
-    processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
-    processor.process_structure()
     surface_identifier = SurfaceAtomIdentifier(processor)
-    surface_markers = surface_identifier.find_surface_atoms()
-    surface_result = surface_identifier.analyze_bonded_surface_atoms()
+    print(surface_identifier.check_layer_connectivity())
+
+
+    # normalizer = StructureNormalizer(processor)
+    # normalizer.convert_to_normal_structure(output_path="POSCAR_bulk")
+    #
+    #
+    # file_path = "POSCAR_bulk"
+    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, -2, 2), cutoff_factor=1.0)
+    # processor.process_structure()
+    #
+    #
+    #
+    #
+    # transformer = BulkTo2DTransformer(processor)
+    # transformer.transform_to_2d(output_path="POSCAR_2D")
+    #
+    # file_path = "POSCAR_2D"
+    # processor = StructureProcessor(file_path, supercell_boundry=(-2, 2, -2, 2, 0, 0), cutoff_factor=1.0)
+    # processor.process_structure()
+    # surface_identifier = SurfaceAtomIdentifier(processor)
+    # surface_markers = surface_identifier.find_surface_atoms()
+    # surface_result = surface_identifier.analyze_bonded_surface_atoms()
 
     #print_surface_summary(surface_markers)
     #print(format_surface_atoms_output(surface_result))
-    if not verify_surface_atom_rule(surface_result):
-        print("False")
-        shutil.copyfile(path,f"data/structure_not_satisfy/{file_name}")
+
     #
     #
 
 if __name__ == "__main__":
     """ 2578 ,  3439,  3468  ,   3849,   4160, 4906, 5824 ,6023, 7049 , 7277 ,  7784  ,8093,  8094 , 8190, 8378 ,
               8586 ,   8800,  8806, 8946, 9396, 9622, 9815  """
-    source_dir  =  "data/structure1"
-    i = 0
-    for filename in os.listdir(source_dir):
-        i = i+1
-        print(i)
-        path = os.path.join(source_dir, filename)
-        main(path,filename)
-
+    path  =  "test/POSCAR_mp-541775"
+    main(path)
